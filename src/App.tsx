@@ -1,44 +1,69 @@
-// src/App.tsx
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { WelcomePage } from "./pages/WelcomePage"; // Adicionado
-import { LoginPage } from "./pages/LoginPage";
-import { RegisterPage } from "./pages/RegisterPage";
-import { Toaster } from "./components/ui/toaster";
-import { Layout } from "./components/Layout";
-import { Scheduler } from "./components/Scheduler";
-import { PatientCRM } from "./components/PatientCRM";
-import { RoomManager } from "./components/RoomManager";
-import { DoctorManager } from "./components/DoctorManager";
-import { InventoryManager } from "./components/InventoryManager";
-import { FinancialManager } from "./components/FinancialManager";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { supabase } from './lib/supabaseClient'
+import { User } from '@supabase/supabase-js'
+import Layout from './components/Layout'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+import WelcomePage from './pages/WelcomePage'
+import './App.css'
 
 function App() {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Verificar se há um usuário logado
+    const getSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        setUser(session?.user ?? null)
+      } catch (error) {
+        console.error('Erro ao verificar sessão:', error)
+        setUser(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    getSession()
+
+    // Escutar mudanças na autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setUser(session?.user ?? null)
+        setLoading(false)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
-        {/* Rota raiz agora é a página de boas-vindas */}
-        <Route path="/" element={<WelcomePage />} />
+        {/* Rota pública - Página de boas-vindas */}
+        <Route path="/welcome" element={<WelcomePage />} />
         
         {/* Rotas de autenticação */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-
-        {/* Rotas do dashboard */}
-        <Route path="/dashboard" element={<Layout />}>
-          <Route index element={<Scheduler />} />
-          <Route path="agenda" element={<Scheduler />} />
-          <Route path="pacientes" element={<PatientCRM />} />
-          <Route path="salas" element={<RoomManager />} />
-          <Route path="medicos" element={<DoctorManager />} />
-          <Route path="estoque" element={<InventoryManager />} />
-          <Route path="financeiro" element={<FinancialManager />} />
-        </Route>
-
-        {/* Catch all - redireciona para a página de boas-vindas */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/dashboard" />} />
+        <Route path="/register" element={!user ? <RegisterPage /> : <Navigate to="/dashboard" />} />
+        
+        {/* Rotas protegidas */}
+        <Route path="/dashboard/*" element={user ? <Layout /> : <Navigate to="/welcome" />} />
+        
+        {/* Rota raiz - redireciona baseado no estado de autenticação */}
+        <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Navigate to="/welcome" />} />
       </Routes>
-      <Toaster richColors />
-    </BrowserRouter>
+    </Router>
   )
 }
 
