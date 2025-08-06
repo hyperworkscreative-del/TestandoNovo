@@ -1,5 +1,3 @@
-// supabase/functions/_shared/cors.ts
-
 // Permite requisições do ambiente de desenvolvimento local e da URL de produção definida em env
 const allowedOrigins = [
   'http://localhost:3000',
@@ -23,7 +21,7 @@ export const getCorsHeaders = (origin: string | null) => {
     };
 }
 
-// Mantém compatibilidade com o código existente
+// Headers CORS padrão para compatibilidade com código existente
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',

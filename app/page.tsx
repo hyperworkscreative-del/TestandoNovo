@@ -1,5 +1,6 @@
-import { WelcomePage } from "../src/pages/WelcomePage"
+import { Navigate } from 'react-router-dom'
 
 export default function Page() {
-  return <WelcomePage />
+  // Redireciona para a página de boas-vindas
+  return <Navigate to="/" replace />
 }
