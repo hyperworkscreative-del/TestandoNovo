@@ -1,11 +1,12 @@
 // src/lib/supabaseClient.ts
-
 import { createClient } from '@supabase/supabase-js'
 
-// As variáveis são lidas do ambiente. Se não existirem, serão strings vazias.
-// A biblioteca Supabase lidará com isso internamente, evitando que a aplicação quebre na inicialização.
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? ""
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ""
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// A verificação que lançava o erro foi removida.
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error("Variáveis de ambiente do Supabase não encontradas. Verifique seu arquivo .env")
+  throw new Error("Supabase URL and Anon Key are required.");
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
